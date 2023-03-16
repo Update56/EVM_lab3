@@ -5,10 +5,7 @@ using namespace std;
 
 int main()
 {
-	signed short int mtx[size][size];
-	signed short int temp[size][size];
-	signed short int sum[size];
-
+	signed short int mtx[size][size], temp[size][size], sum[size];
 	cout << "Enter matrix 4x4\n";
 	for (int i = 0; i < size; i++) //заполняем матрицу
 	{
@@ -30,15 +27,12 @@ int main()
 		loop cycl
 		movq[sum], mm0 //перемещаем результат в sum
 	}
-
 	cout << "Original sum\n";
 	for (int i = 0; i < size; i++)
 		printf("%d ", sum[i]);
 	cout << '\n';
-
 	_asm
-	{
-			/*Используем сортировку пузырьком*/
+	{			/*Используем сортировку пузырьком*/
 
 		mov ecx, size - 1	//счётчик внешнего цикла сортировки...
 		ext:
@@ -71,7 +65,6 @@ int main()
 			ret	//выход из подпрограммы
 		ending:
 	}
-	
 	cout << "\nSorted matrix and sum\n";
 	for (int i = 0; i < size; i++)
 	{
@@ -82,5 +75,5 @@ int main()
 	cout << '\n';
 	for (int i = 0; i < size; i++)
 		printf("%d ", sum[i]);
-	return 0;
+	return 1;
 }
