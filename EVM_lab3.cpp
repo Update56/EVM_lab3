@@ -5,91 +5,82 @@ using namespace std;
 
 int main()
 {
-	int sz = size, nol = 0;
-	int schet = 0;
-	unsigned int ncx;
-    signed short int mtx[size][size];
-	printf("Enter matrix 4x4\n");
-	for (int i = 0; i < size; i++)
-	{
-		printf("Enter %i row: ", i);
-		for (int j = 0; j < size; j++)
-		{
-			int k;
-			scanf("%d", &k);
-			mtx[i][j] = k;
-		}
-	}
+	signed short int mtx[size][size];
 	signed short int temp[size][size];
 	signed short int sum[size];
-	for (int i = 0; i < size; i++) //транспанируем матрицу
+
+	cout << "Enter matrix 4x4\n";
+	for (int i = 0; i < size; i++) //заполняем матрицу
+	{
+		cout << "Enter " << i << " row: ";
+		for (int j = 0; j < size; j++)
+			cin >> mtx[i][j];
+	}
+	for (int i = 0; i < size; i++) //транспанируем матрицу в отдельный массив для вычисления сумм строк
 		for (int j = 0; j < size; j++)
 			temp[i][j] = mtx[j][i];
 	_asm
 	{
-		mov ecx, [sz]
-		mov eax, 0
-		mov ebx, 0
+		mov ecx, size //счётчик 
+		mov ebx, 0	//начальное смещение
 		cycl:
-		movq mm1, temp [ebx]
-		paddw mm0, mm1
-		add ebx, type sum * size
+		movq mm1, temp[ebx] //перемещаем "строку" в регистр mmx
+		paddw mm0, mm1 //складываем регистры
+		add ebx, 2 * size //увеличиваем смещение на размер массива * размер типа данных
 		loop cycl
-		movq [sum], mm0
-	//	lea edx, sum //заносим адрес массива
-	//	mov ecx, 3
-	//	ext:
-	//	mov ebx, nol //начальное смещение
-	//		inter:
-	//		mov eax, [edx + ebx * type sum]
-	//		inc ebx
-	//		cmp eax, [edx + ebx * type sum]
-	//		jle next1
-	//		call swaping
-	//		next1:
-	//		cmp sz - 1, ebx 
-	//      jge inter
-	//	loop ext
-	//	jmp ending
-	//	swaping: 
-	//		xchg eax, [edx + ebx * type sum]
-	//		mov [edx + (ebx - 1) * type sum], eax
-	//		movq mm0, mtx [type sum * size * (ebx - 1)]
-	//		movq mm1, mtx [type sum * size * ebx]
-	//		movq mtx [type sum * size * ebx], mm0
-	//		movq mtx [type sum * size * (ebx - 1)], mm1
-	//		mov ncx, type mtx / size
-	//		ret
-	//	ending:
+		movq[sum], mm0 //перемещаем результат в sum
 	}
 
-	for (int i = 0; i < size - 1; i++)
+	cout << "Original sum\n";
+	for (int i = 0; i < size; i++)
+		printf("%d ", sum[i]);
+	cout << '\n';
+
+	_asm
 	{
-		for (int j = 0; j < size - 1; j++)
-		{
-			if (sum[j] > sum[j+1])
-			{
-				swap(sum[j], sum[j + 1]);
-				_asm 
-				{
-					movq mm0, [mtx + type sum * size * j]
-					movq mm1, [mtx + type sum * size * j + 1]
-					movq [mtx + type sum * size * j], mm0
-					movq [mtx + type sum * size * (j + 1)], mm1
-				}
-			}
-		}
+			/*Используем сортировку пузырьком*/
+
+		mov ecx, size - 1	//счётчик внешнего цикла сортировки...
+		ext:
+		push ecx	//...заносим в стек
+		mov ebx, 0	//начальное смещение
+		mov ecx, size - 1	//счётчик внутреннего цикла сортировки
+			inter:
+			mov ax, sum[ebx]	//перемещаем элемент(изначальный) sum с смещением ebx в ax 
+			add ebx, 2	//увеличиваем смещение на размер типа данных (2)
+			cmp sum[ebx], ax	//сравниваем изначальный элемент со следующим элементом sum
+			jg next1	//если меньше 'перепрыгиваем вызов подпрограммы'
+			call swaping	//иначе вызываем свап
+			next1:
+	        loop inter	//зациливание внутреннего цикла
+		pop ecx		//извлечение счётцика внешнего цикла из стека
+		loop ext	//зациливание внешнего цикла
+		jmp ending	//'прыжок' в конец
+		    swaping:	//подпрограмма обмена
+			mov dx, sum[ebx]	//перемещаем в dx элемент sum 
+			mov sum [(ebx - 2)], dx	//перемещаем из dx на место изначального элемента со смещением минус размер типа данных
+		    mov sum[ebx], ax	//перемещаем на текущий элемент sum предыдущий из ax
+			sar ebx, 1	//смещаем в право(делим на 2)
+			movq mm0, mtx [ebx * 8]	//заносим cтроку соотвествующую текущей сумме(sum) в mm0
+			dec ebx	//уменьшаем смещение на один
+			movq mm1, mtx [ebx * 8]	//заносим cтроку соотвествующую изначальной сумме(sum) в mm1
+			movq mtx[ebx * 8], mm0	//замещаем изначальную строку текущей
+			inc ebx	//обратно, увеличиваем смещение на один
+			movq mtx [ebx * 8], mm1 //замещаем текущую строку изначальной
+			sal ebx, 1 //обратно, смещаем влево (умножаем на 2)
+			ret	//выход из подпрограммы
+		ending:
 	}
-
-
-
+	
+	cout << "\nSorted matrix and sum\n";
 	for (int i = 0; i < size; i++)
 	{
 		for (int j = 0; j < size; j++)
-			printf("%d ", mtx[i][j]);
-		printf("\n");
+			cout << mtx[i][j] << ' ';
+		cout << '\n';
 	}
-	printf("%d %d %d %d ", sum[0], sum[1], sum[2], sum[3]);
-	cout << schet;
+	cout << '\n';
+	for (int i = 0; i < size; i++)
+		printf("%d ", sum[i]);
 	return 0;
 }
